@@ -73,12 +73,6 @@ export default function Portfolio() {
         let parallaxRafId: number | null = null;
         let alive = true;
         let keyboardFocusItem: HTMLElement | null = null;
-        let cursorRingX = 0;
-        let cursorRingY = 0;
-        let cursorTargetX = 0;
-        let cursorTargetY = 0;
-        let cursorAnimating = false;
-        let cursorRafId: number | null = null;
         let loaderHidden = false;
 
         function updateCanvasTransform() {
@@ -259,8 +253,7 @@ export default function Portfolio() {
             isDragging = true;
             hasMoved = false;
             scrollContainer.classList.add('dragging');
-            if (cursorDot) cursorDot.style.visibility = 'hidden';
-            if (cursorRing) { cursorRing.style.visibility = 'hidden'; cursorRing.classList.remove('hover'); }
+            if (cursorDot) { cursorDot.style.visibility = 'hidden'; cursorDot.classList.remove('hover'); }
             startX = e.pageX - scrollLeftVal;
             startY = e.pageY - scrollTopVal;
             lastX = e.pageX;
@@ -325,7 +318,6 @@ export default function Portfolio() {
             scrollContainer.classList.remove('dragging');
             canvas.style.pointerEvents = '';
             if (cursorDot) cursorDot.style.visibility = '';
-            if (cursorRing) cursorRing.style.visibility = '';
             applyMomentum();
         }
         document.addEventListener('mouseup', handleMouseUp);
@@ -820,42 +812,22 @@ export default function Portfolio() {
         // =============================================
         // CUSTOM CURSOR
         // =============================================
-        function animateCursorRing() {
-            if (!alive || !cursorRing) return;
-            cursorRingX += (cursorTargetX - cursorRingX) * 0.15;
-            cursorRingY += (cursorTargetY - cursorRingY) * 0.15;
-            cursorRing.style.left = cursorRingX + 'px';
-            cursorRing.style.top = cursorRingY + 'px';
-            if (Math.abs(cursorTargetX - cursorRingX) > 0.5 || Math.abs(cursorTargetY - cursorRingY) > 0.5) {
-                cursorRafId = requestAnimationFrame(animateCursorRing);
-            } else {
-                cursorAnimating = false;
-                cursorRafId = null;
-            }
-        }
-
         function handleCursorMove(e: MouseEvent) {
-            if (isDragging || !cursorDot || !cursorRing) return;
+            if (isDragging || !cursorDot) return;
             cursorDot.style.left = e.clientX + 'px';
             cursorDot.style.top = e.clientY + 'px';
-            cursorTargetX = e.clientX;
-            cursorTargetY = e.clientY;
-            if (!cursorAnimating) {
-                cursorAnimating = true;
-                cursorRafId = requestAnimationFrame(animateCursorRing);
-            }
         }
 
         function handleCursorOver(e: MouseEvent) {
-            if (isDragging || !cursorRing) return;
+            if (isDragging || !cursorDot) return;
             const target = (e.target as Element).closest('.item, button, a, .modal-gallery-item');
-            if (target) cursorRing.classList.add('hover');
+            if (target) cursorDot.classList.add('hover');
         }
 
         function handleCursorOut(e: MouseEvent) {
-            if (isDragging || !cursorRing) return;
+            if (isDragging || !cursorDot) return;
             const target = (e.target as Element).closest('.item, button, a, .modal-gallery-item');
-            if (target) cursorRing.classList.remove('hover');
+            if (target) cursorDot.classList.remove('hover');
         }
 
         if (!isTouchDevice && cursorDot && cursorRing) {
@@ -908,15 +880,9 @@ export default function Portfolio() {
             }
         }
 
-        if (cursorDot && cursorRing) {
-            cursorRingX = window.innerWidth / 2;
-            cursorRingY = window.innerHeight / 2;
-            cursorTargetX = window.innerWidth / 2;
-            cursorTargetY = window.innerHeight / 2;
-            cursorDot.style.left = cursorRingX + 'px';
-            cursorDot.style.top = cursorRingY + 'px';
-            cursorRing.style.left = cursorRingX + 'px';
-            cursorRing.style.top = cursorRingY + 'px';
+        if (cursorDot) {
+            cursorDot.style.left = window.innerWidth / 2 + 'px';
+            cursorDot.style.top = window.innerHeight / 2 + 'px';
         }
 
         // =============================================
@@ -928,7 +894,7 @@ export default function Portfolio() {
 
             if (animationId) cancelAnimationFrame(animationId);
             if (parallaxRafId) cancelAnimationFrame(parallaxRafId);
-            if (cursorRafId) cancelAnimationFrame(cursorRafId);
+
 
             filterToggle.removeEventListener('click', handleFilterToggleClick);
             document.removeEventListener('click', handleDocumentClickForFilter);
