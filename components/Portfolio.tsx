@@ -21,7 +21,6 @@ export default function Portfolio() {
     const fullscreenCloseRef = useRef<HTMLButtonElement>(null);
     const fullscreenCounterRef = useRef<HTMLDivElement>(null);
     const instructionsRef = useRef<HTMLDivElement>(null);
-    const resetBtnRef = useRef<HTMLButtonElement>(null);
     const cursorDotRef = useRef<HTMLDivElement>(null);
     const cursorRingRef = useRef<HTMLDivElement>(null);
     const loaderRef = useRef<HTMLDivElement>(null);
@@ -38,7 +37,6 @@ export default function Portfolio() {
         const fullscreenImg = fullscreenImgRef.current!;
         const fullscreenClose = fullscreenCloseRef.current!;
         const fullscreenCounter = fullscreenCounterRef.current!;
-        const resetBtn = resetBtnRef.current!;
         const cursorDot = cursorDotRef.current;
         const cursorRing = cursorRingRef.current;
         const loader = loaderRef.current;
@@ -72,7 +70,6 @@ export default function Portfolio() {
         let parallaxY = 0;
         let parallaxRafId: number | null = null;
         let alive = true;
-        let keyboardFocusItem: HTMLElement | null = null;
         let loaderHidden = false;
 
         function updateCanvasTransform() {
@@ -246,10 +243,6 @@ export default function Portfolio() {
         // DRAG & SCROLL
         // =============================================
         function handleMouseDown(e: MouseEvent) {
-            if (keyboardFocusItem) {
-                keyboardFocusItem.classList.remove('flipped', 'keyboard-focus');
-                keyboardFocusItem = null;
-            }
             isDragging = true;
             hasMoved = false;
             scrollContainer.classList.add('dragging');
@@ -738,75 +731,21 @@ export default function Portfolio() {
             step();
         }
 
-        function handleResetClick() {
-            if (keyboardFocusItem) {
-                keyboardFocusItem.classList.remove('flipped', 'keyboard-focus');
-                keyboardFocusItem = null;
-            }
-            animateScrollTo(0, 0);
-        }
-        resetBtn.addEventListener('click', handleResetClick);
-
         // =============================================
         // ARROW KEY NAVIGATION
         // =============================================
         function navigateByArrow(key: string) {
-            const dir = key.replace('Arrow', '').toLowerCase();
-
-            let refX: number, refY: number;
-            if (keyboardFocusItem) {
-                refX = parseFloat(keyboardFocusItem.style.left);
-                refY = parseFloat(keyboardFocusItem.style.top);
-            } else {
-                refX = window.innerWidth / 2 - scrollLeftVal;
-                refY = window.innerHeight / 2 - scrollTopVal;
+            const stepX = window.innerWidth * 0.35;
+            const stepY = window.innerHeight * 0.35;
+            let targetX = scrollLeftVal;
+            let targetY = scrollTopVal;
+            switch (key) {
+                case 'ArrowRight': targetX -= stepX; break;
+                case 'ArrowLeft':  targetX += stepX; break;
+                case 'ArrowDown':  targetY -= stepY; break;
+                case 'ArrowUp':    targetY += stepY; break;
             }
-
-            let bestItem: HTMLElement | null = null;
-            let bestDist = Infinity;
-
-            const isHorizontal = dir === 'left' || dir === 'right';
-
-            itemsCache.forEach(item => {
-                if (item === keyboardFocusItem) return;
-                if (item.classList.contains('hidden')) return;
-                const ix = parseFloat(item.style.left);
-                const iy = parseFloat(item.style.top);
-                const dx = ix - refX;
-                const dy = iy - refY;
-                const absDx = Math.abs(dx);
-                const absDy = Math.abs(dy);
-
-                let valid = false;
-                switch (dir) {
-                    case 'up': valid = dy < -30 && absDx < absDy * 2; break;
-                    case 'down': valid = dy > 30 && absDx < absDy * 2; break;
-                    case 'left': valid = dx < -30 && absDy < absDx * 2; break;
-                    case 'right': valid = dx > 30 && absDy < absDx * 2; break;
-                }
-                if (!valid) return;
-
-                const dist = isHorizontal
-                    ? absDx + absDy * 3
-                    : absDy + absDx * 3;
-                if (dist < bestDist) {
-                    bestDist = dist;
-                    bestItem = item;
-                }
-            });
-
-            if (!bestItem) return;
-            const target: HTMLElement = bestItem;
-
-            if (keyboardFocusItem) {
-                keyboardFocusItem.classList.remove('flipped', 'keyboard-focus');
-            }
-            keyboardFocusItem = target;
-            target.classList.add('flipped', 'keyboard-focus');
-
-            const targetScrollX = window.innerWidth / 2 - parseFloat(target.style.left);
-            const targetScrollY = window.innerHeight / 2 - parseFloat(target.style.top);
-            animateScrollTo(targetScrollX, targetScrollY);
+            animateScrollTo(targetX, targetY);
         }
 
         // =============================================
@@ -898,8 +837,6 @@ export default function Portfolio() {
 
             filterToggle.removeEventListener('click', handleFilterToggleClick);
             document.removeEventListener('click', handleDocumentClickForFilter);
-            resetBtn.removeEventListener('click', handleResetClick);
-
             scrollContainer.removeEventListener('mousedown', handleMouseDown);
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
@@ -934,7 +871,7 @@ export default function Portfolio() {
             {/* LOADER */}
             <div className="loader-overlay" ref={loaderRef}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/img/logo-ash1999.webp" alt="" className="loader-logo" />
+                <img src="/img/etoile-logo.webp" alt="" className="loader-logo" />
                 <div className="loader-bar"><div className="loader-bar-inner" /></div>
             </div>
 
@@ -942,31 +879,21 @@ export default function Portfolio() {
             <div className="header">
                 <div className="logo">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={optimizedSrc('/img/logo-ash1999.webp', 256)} alt="ash1999" width={130} height={130} />
+                    <img src={optimizedSrc('/img/etoile-logo.webp', 256)} alt="ash1999" width={40} height={80} />
                 </div>
 
-                <div className="header-actions">
-                    {/* RESET VIEW */}
-                    <button className="reset-btn" ref={resetBtnRef} aria-label="Reset view">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-                            <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
-                        </svg>
-                    </button>
-
-                    {/* FILTER MENU */}
-                    <div className="filter-wrapper">
-                        <button className="filter-toggle" ref={filterToggleRef}>Filters</button>
-                        <div className="filter-container" ref={filterContainerRef}>
-                            <button className="filter-btn active" data-filter="all">All</button>
-                        </div>
+                {/* FILTER MENU */}
+                <div className="filter-wrapper">
+                    <button className="filter-toggle" ref={filterToggleRef}>Filters</button>
+                    <div className="filter-container" ref={filterContainerRef}>
+                        <button className="filter-btn active" data-filter="all">All</button>
                     </div>
                 </div>
             </div>
 
             {/* INSTRUCTIONS */}
             <div className="instructions" ref={instructionsRef}>
-                SCROLL/DRAG TO MOVE · CLICK TO FLIP · ARROWS TO NAVIGATE
+                SCROLL/DRAG TO MOVE · CLICK TO FLIP
             </div>
 
             {/* MAIN CANVAS */}
