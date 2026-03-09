@@ -194,8 +194,8 @@ export default function Portfolio() {
                         item.style.left = finalLeft + 'px';
                         item.style.transform = 'translate(-50%, -50%)';
 
-                        const coverHTML = project.video && !isTouchDevice
-                            ? `<video autoplay muted loop playsinline class="img-fade-in" src="${project.video}"></video>`
+                        const coverHTML = project.video
+                            ? `<video muted loop playsinline class="img-fade-in" src="${project.video}"></video>`
                             : `<div class="img-placeholder" data-src="${project.image}" data-alt="${project.title}"></div>`;
 
                         item.innerHTML = `
@@ -226,6 +226,16 @@ export default function Portfolio() {
                                     openModal(project);
                                 } else {
                                     item.classList.toggle('flipped');
+                                    const video = item.querySelector('video') as HTMLVideoElement | null;
+                                    if (video) {
+                                        if (item.classList.contains('flipped')) {
+                                            video.style.visibility = 'hidden';
+                                            video.pause();
+                                        } else {
+                                            video.style.visibility = '';
+                                            video.play().catch(() => {});
+                                        }
+                                    }
                                 }
                             }
                         });
@@ -237,6 +247,10 @@ export default function Portfolio() {
             }
 
             canvas.appendChild(fragment);
+
+            canvas.querySelectorAll('video').forEach(v => {
+                (v as HTMLVideoElement).play().catch(() => {});
+            });
         }
 
         // =============================================
