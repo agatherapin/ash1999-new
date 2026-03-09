@@ -595,7 +595,7 @@ body {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.9);
     font-size: 14px;
     font-family: var(--font-inter), "neue-haas-grotesk-display", sans-serif;
 }
