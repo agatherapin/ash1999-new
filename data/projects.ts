@@ -32,7 +32,7 @@ export const projects: Project[] = [
             '/img/rare-stage/rapport-9.webp'
         ],
         width: 240,
-        aspectRatio: 0.7,
+        aspectRatio: 0.8,
         top: 45,
         left: 60
     },
