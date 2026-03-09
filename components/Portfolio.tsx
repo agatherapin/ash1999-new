@@ -22,7 +22,6 @@ export default function Portfolio() {
     const fullscreenCounterRef = useRef<HTMLDivElement>(null);
     const instructionsRef = useRef<HTMLDivElement>(null);
     const cursorDotRef = useRef<HTMLDivElement>(null);
-    const cursorRingRef = useRef<HTMLDivElement>(null);
     const loaderRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -38,7 +37,6 @@ export default function Portfolio() {
         const fullscreenClose = fullscreenCloseRef.current!;
         const fullscreenCounter = fullscreenCounterRef.current!;
         const cursorDot = cursorDotRef.current;
-        const cursorRing = cursorRingRef.current;
         const loader = loaderRef.current;
 
         let fullscreenImages: string[] = [];
@@ -65,6 +63,7 @@ export default function Portfolio() {
         let currentMouseY = 0;
         const activeFilters = new Set(['all']);
         const itemsCache: HTMLElement[] = [];
+        const flipTimers = new Map<HTMLElement, ReturnType<typeof setTimeout>>();
         let dragRafPending = false;
         let parallaxX = 0;
         let parallaxY = 0;
@@ -78,7 +77,7 @@ export default function Portfolio() {
 
         function getCardScale() {
             const w = window.innerWidth;
-            if (w <= 480) return 0.75;
+            if (w <= 480) return 0.85;
             if (w <= 768) return 0.85;
             return 1;
         }
@@ -181,9 +180,7 @@ export default function Portfolio() {
                         item.className = 'item';
 
                         const scaledWidth = project.width * scale;
-                        const hasLongDesc = isTouchDevice && project.description.length > 100;
-                        const heightScale = hasLongDesc ? 1.3 : 1;
-                        const itemHeight = (scaledWidth / project.aspectRatio) * heightScale;
+                        const itemHeight = scaledWidth / project.aspectRatio;
                         item.style.width = scaledWidth + 'px';
                         item.style.height = itemHeight + 'px';
 
@@ -221,6 +218,17 @@ export default function Portfolio() {
                             </div>
                         `;
 
+                        function unflipItem() {
+                            if (!item.classList.contains('flipped')) return;
+                            item.classList.remove('flipped');
+                            flipTimers.delete(item);
+                            const video = item.querySelector('video') as HTMLVideoElement | null;
+                            if (video) {
+                                video.style.visibility = '';
+                                video.play().catch(() => {});
+                            }
+                        }
+
                         item.addEventListener('click', (e) => {
                             if (!hasMoved) {
                                 if ((e.target as Element).classList.contains('view-more-btn')) {
@@ -229,11 +237,19 @@ export default function Portfolio() {
                                 } else {
                                     item.classList.toggle('flipped');
                                     const video = item.querySelector('video') as HTMLVideoElement | null;
-                                    if (video) {
-                                        if (item.classList.contains('flipped')) {
+
+                                    const existingTimer = flipTimers.get(item);
+                                    if (existingTimer) clearTimeout(existingTimer);
+
+                                    if (item.classList.contains('flipped')) {
+                                        if (video) {
                                             video.style.visibility = 'hidden';
                                             video.pause();
-                                        } else {
+                                        }
+                                        flipTimers.set(item, setTimeout(unflipItem, 6000));
+                                    } else {
+                                        flipTimers.delete(item);
+                                        if (video) {
                                             video.style.visibility = '';
                                             video.play().catch(() => {});
                                         }
@@ -492,16 +508,19 @@ export default function Portfolio() {
             }
         }
 
-        function handleParallaxMouseMove(e: MouseEvent) {
+        function handleDesktopMouseMove(e: MouseEvent) {
             mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
             mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
             if (!isDragging && !parallaxRafId) {
                 parallaxRafId = requestAnimationFrame(animateParallax);
             }
+            if (cursorDot && !isDragging) {
+                cursorDot.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
+            }
         }
 
         if (!isTouchDevice) {
-            document.addEventListener('mousemove', handleParallaxMouseMove);
+            document.addEventListener('mousemove', handleDesktopMouseMove);
         }
 
         // =============================================
@@ -567,7 +586,7 @@ export default function Portfolio() {
 
         function closeModal() {
             modal.classList.remove('active');
-            document.body.style.overflow = 'hidden';
+            document.body.style.overflow = '';
         }
 
         function handleModalCloseClick() {
@@ -767,12 +786,6 @@ export default function Portfolio() {
         // =============================================
         // CUSTOM CURSOR
         // =============================================
-        function handleCursorMove(e: MouseEvent) {
-            if (isDragging || !cursorDot) return;
-            cursorDot.style.left = e.clientX + 'px';
-            cursorDot.style.top = e.clientY + 'px';
-        }
-
         function handleCursorOver(e: MouseEvent) {
             if (isDragging || !cursorDot) return;
             const target = (e.target as Element).closest('.item, button, a, .modal-gallery-item');
@@ -785,8 +798,7 @@ export default function Portfolio() {
             if (target) cursorDot.classList.remove('hover');
         }
 
-        if (!isTouchDevice && cursorDot && cursorRing) {
-            document.addEventListener('mousemove', handleCursorMove);
+        if (!isTouchDevice && cursorDot) {
             document.addEventListener('mouseover', handleCursorOver);
             document.addEventListener('mouseout', handleCursorOut);
         }
@@ -836,8 +848,7 @@ export default function Portfolio() {
         }
 
         if (cursorDot) {
-            cursorDot.style.left = window.innerWidth / 2 + 'px';
-            cursorDot.style.top = window.innerHeight / 2 + 'px';
+            cursorDot.style.transform = `translate(calc(${window.innerWidth / 2}px - 50%), calc(${window.innerHeight / 2}px - 50%))`;
         }
 
         // =============================================
@@ -863,8 +874,7 @@ export default function Portfolio() {
             scrollContainer.removeEventListener('touchend', handleTouchEnd);
 
             if (!isTouchDevice) {
-                document.removeEventListener('mousemove', handleParallaxMouseMove);
-                document.removeEventListener('mousemove', handleCursorMove);
+                document.removeEventListener('mousemove', handleDesktopMouseMove);
                 document.removeEventListener('mouseover', handleCursorOver);
                 document.removeEventListener('mouseout', handleCursorOut);
             }
@@ -878,6 +888,8 @@ export default function Portfolio() {
             fullscreenViewer.removeEventListener('touchstart', handleFsTouchStart);
             fullscreenViewer.removeEventListener('touchend', handleFsTouchEnd);
 
+            flipTimers.forEach(t => clearTimeout(t));
+            flipTimers.clear();
             canvas.innerHTML = '';
         };
     }, []);
@@ -937,7 +949,6 @@ export default function Portfolio() {
 
             {/* CUSTOM CURSOR */}
             <div className="cursor-dot" ref={cursorDotRef} />
-            <div className="cursor-ring" ref={cursorRingRef} />
         </>
     );
 }

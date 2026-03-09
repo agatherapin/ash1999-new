@@ -17,8 +17,7 @@ export const projects: Project[] = [
     {
         title: 'Internship with PMF music label',
         subtitle: 'Jan to March 2025',
-        description: 'Created logo and mockups for ThaHomey brand: Rare.',
-        fullDescription: 'This project explores modern typography through a comprehensive glossary. Each term is illustrated with visual examples and detailed explanations to facilitate understanding.',
+        description: 'I worked on the logo and mockups for ThaHomey brand: Rare.',
         tags: ['Branding'],
         image: '/img/rare-stage/back-cover.webp',
         gallery: [
@@ -183,6 +182,6 @@ export const projects: Project[] = [
         width: 290,
         aspectRatio: 1.5,
         top: 90,
-        left: 80
+        left: 78
     }
 ];
